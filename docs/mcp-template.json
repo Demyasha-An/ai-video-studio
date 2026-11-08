@@ -1,0 +1,26 @@
+{
+  "_comment": "Шаблон MCP-серверов для AI Video Studio. ZCode: ~/.zcode/cli/config.json (user) или <workspace>/.zcode/config.json (workspace). OpenCode: ключ mcp в opencode.jsonc (формат см. docs opencode). kinocut требует uv (uvx), ffmpeg-skill — python + установленный скилл ffmpeg-skill.",
+  "mcp": {
+    "servers": {
+      "kinocut": {
+        "command": "uvx",
+        "args": ["--from", "kinocut", "kino", "--mcp"],
+        "env": {}
+      },
+      "ffmpeg-skill": {
+        "command": "python",
+        "args": ["{{SKILL_DIR}}/ffmpeg-skill/mcp/server.py"],
+        "env": {}
+      },
+      "elevenlabs": {
+        "_comment": "Платный сервис. По умолчанию отключён. Активируйте только с явного разрешения пользователя: получите ключ на elevenlabs.io и вставьте в headers.",
+        "enable": false,
+        "type": "http",
+        "url": "https://api.elevenlabs.io/v1/mcp",
+        "headers": {
+          "xi-api-key": "ELEVENLABS_API_KEY_HERE"
+        }
+      }
+    }
+  }
+}

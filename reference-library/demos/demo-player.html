@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>demo player · video-reference-library</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #0A0F1C; }
+  body { display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  #stage {
+    position: relative; width: 360px; height: 640px; overflow: hidden;
+    background: linear-gradient(180deg, #15223D, #070C18); border-radius: 6px;
+  }
+  #replay {
+    position: absolute; right: 10px; bottom: 10px; z-index: 10;
+    background: rgba(255,255,255,0.14); color: #fff; border: none; border-radius: 8px;
+    padding: 6px 12px; font: 600 13px Arial; cursor: pointer; opacity: .75;
+  }
+  #replay:hover { opacity: 1; }
+  #id { position: absolute; left: 10px; bottom: 10px; z-index: 10; font: 600 12px monospace; color: rgba(255,255,255,.55); }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<button id="replay" title="Повтор">↻</button>
+<div id="id"></div>
+<script src="demos.js"></script>
+<script src="demos2.js"></script>
+<script src="demos3.js"></script>
+<script>
+  const stage = document.getElementById("stage");
+  const id = new URLSearchParams(location.search).get("id") || "VSL-HOOK-001";
+  document.getElementById("id").textContent = id;
+  const fn = DEMOS[id];
+  const T = LOOP[id] || 4;
+  let t0 = performance.now();
+  if (!fn) {
+    stage.innerHTML = "";
+    const m = document.createElement("div");
+    m.style.cssText = "color:#B7C2D4;font:14px Arial;padding:30px;text-align:center";
+    m.textContent = "Демо для " + id + " не найдено (reference-only карточка?)";
+    stage.appendChild(m);
+  } else {
+    function frame(now) {
+      const t = ((now - t0) / 1000) % T;
+      fn(stage, t, T);
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+    document.getElementById("replay").onclick = () => { stage._st = null; stage.innerHTML = ""; t0 = performance.now(); };
+  }
+</script>
+</body>
+</html>

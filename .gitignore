@@ -1,0 +1,16 @@
+# runtime
+.venvs/
+media/
+renders/
+output/
+node_modules/
+build/
+*.log
+
+# шрифты Microsoft нельзя распространять — ставятся инсталляцией (docs/AGENT-SETUP.md §2.5)
+tools/fonts/
+
+# локальные черновики
+draft-tmp-*/
+*.pyc
+__pycache__/

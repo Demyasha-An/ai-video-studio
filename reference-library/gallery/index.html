@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Видео-референсы · video-studio</title>
+<style>
+  :root { --bg:#0A0F1C; --panel:#111A2E; --amber:#FFB020; --teal:#2DD4BF; --text:#EAF0F8; --muted:#93A1B8; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font-family: Arial, "Segoe UI", sans-serif; }
+  header { position: sticky; top:0; z-index:50; background:rgba(10,15,28,.92); backdrop-filter: blur(8px);
+           padding: 14px 22px; border-bottom:1px solid #1C2740; }
+  h1 { font-size: 19px; margin: 0 0 10px; }
+  h1 span { color: var(--muted); font-weight: 400; font-size: 13px; }
+  .controls { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  #q { flex: 1; min-width: 220px; background: var(--panel); border:1px solid #26334F; color:var(--text);
+       border-radius:10px; padding:10px 14px; font-size:14px; outline:none; }
+  #q:focus { border-color: var(--amber); }
+  select { background: var(--panel); color: var(--text); border:1px solid #26334F; border-radius:10px; padding:10px; font-size:13px; }
+  .btn { background: var(--panel); color: var(--text); border:1px solid #26334F; border-radius:10px;
+         padding:10px 14px; font-size:13px; cursor:pointer; }
+  .btn:hover { border-color: var(--amber); }
+  .btn.accent { background: var(--amber); color:#111; border-color: var(--amber); font-weight:800; }
+  #count { color: var(--muted); font-size: 13px; }
+  .cats { display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; }
+  .cat { padding:6px 12px; border-radius:16px; font-size:12.5px; cursor:pointer; border:1px solid #26334F; color:var(--muted); user-select:none; }
+  .cat:hover { color:var(--text); }
+  .cat.on { background: var(--amber); color:#111; border-color:var(--amber); font-weight:700; }
+  main { display:grid; grid-template-columns: repeat(auto-fill, minmax(300px,1fr)); gap:18px; padding:20px; }
+  .card { background:var(--panel); border:1px solid #1C2740; border-radius:16px; overflow:hidden; transition: border-color .15s; }
+  .card:hover { border-color:#2E4066; }
+  .card.sel { border-color: var(--teal); box-shadow: 0 0 0 2px rgba(45,212,191,.35); }
+  .demo { position: relative; width:100%; aspect-ratio: 9/16; max-height: 430px; background:#070C18; cursor:pointer; }
+  .demo iframe { width:100%; height:100%; border:none; }
+  .demo .open { position:absolute; top:8px; right:8px; background:rgba(0,0,0,.6); color:#fff; border:none;
+                border-radius:8px; padding:5px 9px; font-size:12px; cursor:pointer; opacity:0; }
+  .demo:hover .open { opacity:1; }
+  .meta { padding: 12px 14px 14px; }
+  .idrow { display:flex; align-items:center; gap:8px; }
+  .rid { font: 700 12.5px monospace; color: var(--amber); cursor:pointer; }
+  .rid:hover { text-decoration: underline; }
+  .src { font-size: 10.5px; padding: 2px 8px; border-radius: 10px; border: 1px solid #26334F; color: var(--muted); }
+  .src.mit { color: var(--teal); border-color: rgba(45,212,191,.4); }
+  .src.warn { color: #FF9A9A; border-color: rgba(255,120,120,.4); }
+  .ttl { font-weight: 800; font-size: 15px; margin-top: 6px; }
+  .desc { color: var(--muted); font-size: 12.5px; line-height: 1.45; margin-top: 4px; }
+  .tags { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 5px; }
+  .tag { font-size: 11px; color: var(--muted); background: rgba(255,255,255,.05); padding: 3px 9px; border-radius: 10px; }
+  .links { margin-top: 9px; display: flex; gap: 12px; font-size: 12px; }
+  .links a { color: var(--teal); text-decoration: none; }
+  .links a:hover { text-decoration: underline; }
+  #panel { position: fixed; right: 20px; bottom: 20px; z-index: 60; background: var(--panel);
+           border: 1px solid #26334F; border-radius: 14px; padding: 12px 16px; display: none; max-width: 380px;
+           box-shadow: 0 20px 60px rgba(0,0,0,.6); }
+  #panel.show { display: block; }
+  #panel .ids { font: 12px monospace; color: var(--teal); margin: 6px 0; max-width: 340px; }
+  #fs { position: fixed; inset: 0; background: #000; display: none; z-index: 100; }
+  #fs.show { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 14px; }
+  #fs iframe { width: min(100vw, calc(100vh * 9 / 16)); height: min(100vh, calc(100vw * 16 / 9)); border: none; border-radius: 8px; }
+  #fs .fbar { display: flex; gap: 10px; }
+  #fs .fbar .btn { font-size: 14px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Видео-референсы <span>· библиотека video-studio · живые демо · выбери по ID и передай Motion Designer</span></h1>
+  <div class="controls">
+    <input id="q" placeholder="Поиск: глитч, карта, счётчик, ken burns…" autocomplete="off">
+    <select id="lic">
+      <option value="">Все лицензии</option>
+      <option value="mit">Только MIT (коммерч. ок)</option>
+      <option value="warn">Только reference-only</option>
+    </select>
+    <span id="count"></span>
+    <button class="btn accent" id="exportBtn">Выбранное (0)</button>
+  </div>
+  <div class="cats" id="quick"></div>
+  <div class="cats" id="cats"></div>
+</header>
+<main id="grid"></main>
+
+<div id="panel">
+  <b style="font-size:14px">Выбранные референсы</b>
+  <div class="ids" id="selIds">—</div>
+  <button class="btn" id="copySel">Копировать ID</button>
+  <button class="btn" id="dlSel">Скачать selection.json</button>
+  <button class="btn" id="clearSel">Очистить</button>
+</div>
+
+<div id="fs">
+  <iframe id="fsFrame" title="Полноэкранный просмотр"></iframe>
+  <div class="fbar">
+    <button class="btn" id="fsCopy">Копировать ID</button>
+    <button class="btn" id="fsSrc">Открыть источник</button>
+    <button class="btn accent" id="fsClose">Закрыть (Esc)</button>
+  </div>
+</div>
+
+<script>
+let CATALOG = null;
+const state = { q: "", cat: "", lic: "", sel: new Set(), quick: "" };
+const QUICK = [
+  ["free", "Бесплатно", (it) => it.free],
+  ["code", "Есть код", (it) => it.has_code],
+  ["info", "Инфографика", (it) => ["ainfo", "dataviz", "infographic", "stats", "financial"].includes(it.category)],
+  ["modern", "Современные референсы", (it) => it.modern],
+];
+
+async function boot() {
+  // catalog.json и demos/ синхронизируются в gallery/ скриптом tools/build-gallery.mjs
+  CATALOG = await (await fetch("catalog.json")).json();
+  renderCats();
+  render();
+  document.getElementById("q").oninput = (e) => { state.q = e.target.value.toLowerCase(); render(); };
+  document.getElementById("lic").onchange = (e) => { state.lic = e.target.value; render(); };
+  document.getElementById("exportBtn").onclick = togglePanel;
+  document.getElementById("copySel").onclick = () => navigator.clipboard.writeText([...state.sel].join(" "));
+  document.getElementById("dlSel").onclick = () => {
+    const items = CATALOG.items.filter((i) => state.sel.has(i.id));
+    const blob = new Blob([JSON.stringify({ selected_ids: [...state.sel], items }, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); a.download = "selection.json"; a.click();
+  };
+  document.getElementById("clearSel").onclick = () => { state.sel.clear(); syncSel(); };
+  document.getElementById("fsClose").onclick = closeFs;
+  document.getElementById("fsCopy").onclick = () => navigator.clipboard.writeText(document.getElementById("fsFrame").dataset.id || "");
+  document.getElementById("fsSrc").onclick = () => {
+    const it = CATALOG.items.find((i) => i.id === document.getElementById("fsFrame").dataset.id);
+    if (it) window.open(it.source_url, "_blank");
+  };
+  window.addEventListener("keydown", (e) => { if (e.key === "Escape") closeFs(); });
+}
+function renderCats() {
+  const qbox = document.getElementById("quick");
+  qbox.innerHTML = "";
+  for (const [slug, label, fn] of QUICK) {
+    const c = document.createElement("span");
+    c.className = "cat" + (state.quick === slug ? " on" : "");
+    c.style.borderColor = state.quick === slug ? "var(--teal)" : "";
+    c.textContent = label;
+    c.onclick = () => { state.quick = state.quick === slug ? "" : slug; renderCats(); render(); };
+    qbox.appendChild(c);
+  }
+  const box = document.getElementById("cats");
+  const chip = (slug, label) => {
+    const c = document.createElement("span");
+    c.className = "cat" + (state.cat === slug ? " on" : "");
+    c.textContent = label;
+    c.onclick = () => { state.cat = state.cat === slug ? "" : slug; renderCats(); render(); };
+    box.appendChild(c);
+  };
+  box.innerHTML = "";
+  chip("", "Все категории");
+  CATALOG.categories.forEach(([slug, label]) => chip(slug, `${label} · ${CATALOG.items.filter((i) => i.category === slug).length}`));
+}
+function licBadge(it) {
+  const warn = it.commercial !== true;
+  return `<span class="src ${warn ? "warn" : "mit"}">${it.license}${warn ? " · ознакомление" : " · коммерч. ✓"}</span>`;
+}
+function matches(it) {
+  if (state.cat && it.category !== state.cat) return false;
+  if (state.lic === "mit" && it.commercial !== true) return false;
+  if (state.lic === "warn" && it.commercial === true) return false;
+  const q = QUICK.find(([slug]) => slug === state.quick);
+  if (q && !q[2](it)) return false;
+  if (state.q) {
+    const hay = `${it.id} ${it.title} ${it.title_ru} ${it.description} ${it.tags.join(" ")} ${it.style || ""}`.toLowerCase();
+    if (!state.q.split(/\s+/).every((w) => hay.includes(w))) return false;
+  }
+  return true;
+}
+function render() {
+  const grid = document.getElementById("grid");
+  const items = CATALOG.items.filter(matches);
+  document.getElementById("count").textContent = `${items.length} / ${CATALOG.items.length}`;
+  grid.innerHTML = "";
+  for (const it of items) {
+    const card = document.createElement("div");
+    card.className = "card" + (state.sel.has(it.id) ? " sel" : "");
+    const isRef = it.license === "NOT-STATED";
+    const demoUrl = isRef ? null : it.demo;
+    card.innerHTML = `
+      <div class="demo">
+        ${demoUrl ? `<iframe loading="lazy" src="${demoUrl}" title="${it.id}"></iframe>` : `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#8A6A8A;font-size:34px">🔗</div>`}
+        <button class="open" title="На весь экран">⛶</button>
+      </div>
+      <div class="meta">
+        <div class="idrow">
+          <span class="rid" title="Клик — копировать ID">${it.id}</span>
+          ${licBadge(it)}
+          <span class="src">${it.source.toUpperCase()}</span>
+        </div>
+        <div class="ttl">${it.title_ru}</div>
+        <div class="desc">${it.description}</div>
+        ${it.style ? `<div class="desc" style="margin-top:6px"><b style="color:var(--teal)">Стиль:</b> ${it.style}${it.timing ? ` · <b style="color:var(--teal)">Тайминг:</b> ${it.timing}` : ""}</div>` : ""}
+        <div class="tags">${it.tags.map((t) => `<span class="tag">${t}</span>`).join("")}</div>
+        <div class="links">
+          <a href="${it.source_url}" target="_blank">источник ↗</a>
+          ${it.code_path && !String(it.code_path).startsWith("sources-url") ? `<a href="#" onclick="navigator.clipboard.writeText('${it.code_path}');return false" title="${it.code_path}">код: скопировать путь</a>` : ""}
+          <a href="#" onclick="toggleSel('${it.id}');return false">${state.sel.has(it.id) ? "✓ выбран" : "+ выбрать"}</a>
+        </div>
+      </div>`;
+    card.querySelector(".open").onclick = () => openFs(it);
+    if (demoUrl) card.querySelector(".demo").onclick = (e) => { if (!e.target.classList.contains("open")) openFs(it); };
+    card.querySelector(".rid").onclick = () => navigator.clipboard.writeText(it.id);
+    grid.appendChild(card);
+  }
+  syncSel();
+}
+function toggleSel(id) {
+  state.sel.has(id) ? state.sel.delete(id) : state.sel.add(id);
+  render();
+}
+function syncSel() {
+  document.getElementById("exportBtn").textContent = `Выбранное (${state.sel.size})`;
+  document.getElementById("selIds").textContent = state.sel.size ? [...state.sel].join("  ") : "—";
+  document.getElementById("panel").classList.toggle("show", state.sel.size > 0);
+}
+function togglePanel() { if (state.sel.size) document.getElementById("panel").classList.toggle("show"); }
+let fsItem = null;
+function openFs(it) {
+  fsItem = it;
+  const f = document.getElementById("fsFrame");
+  f.dataset.id = it.id;
+  f.src = it.demo || "";
+  document.getElementById("fs").classList.add("show");
+}
+function closeFs() { document.getElementById("fs").classList.remove("show"); document.getElementById("fsFrame").src = ""; }
+boot();
+</script>
+</body>
+</html>

@@ -1,0 +1,51 @@
+{
+  "language": "ru",
+  "default_format": {
+    "platform": "reels/shorts/tiktok",
+    "width": 1080,
+    "height": 1920,
+    "fps": 30,
+    "container": "mp4",
+    "video_codec": "libx264",
+    "crf": 19,
+    "preset": "slow",
+    "audio_codec": "aac",
+    "audio_bitrate": "192k",
+    "audio_samplerate": 48000,
+    "faststart": true
+  },
+  "supported_formats": [
+    { "name": "9:16 vertical", "width": 1080, "height": 1920 },
+    { "name": "16:9 landscape", "width": 1920, "height": 1080 },
+    { "name": "1:1 square", "width": 1080, "height": 1080 }
+  ],
+  "loudness_target_lufs": -14,
+  "true_peak_dbtp": -1.5,
+  "default_duration_sec": { "min": 30, "max": 60 },
+  "tts": {
+    "default_engine": "edge-tts",
+    "command": "uvx edge-tts",
+    "voice": "ru-RU-DmitryNeural",
+    "alt_voices": ["ru-RU-SvetlanaNeural", "ru-RU-DariyaNeural", "ru-RU-PavelNeural"],
+    "paid_engine": "elevenlabs-mcp (требует API-ключ и разрешения пользователя)"
+  },
+  "asr": {
+    "engine": "faster-whisper",
+    "model": "small",
+    "venv_python": "{{STUDIO_DIR}}/.venvs/whisper/Scripts/python.exe"
+  },
+  "engines": {
+    "ffmpeg": "winget links (PATH)",
+    "remotion_project": "{{STUDIO_DIR}}/compositions",
+    "kinocut": "uvx --from kinocut kino",
+    "chatterbox": "НЕ установлен: нет NVIDIA GPU (AMD Vega 8 iGPU), CPU-инференс непрактичен"
+  },
+  "agents": [
+    "video-scriptwriter",
+    "motion-designer",
+    "voice-producer",
+    "video-editor",
+    "video-quality-controller",
+    "video-director (координатор)"
+  ]
+}
