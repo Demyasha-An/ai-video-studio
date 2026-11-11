@@ -111,6 +111,9 @@ compositions/            Remotion-проект: Root.tsx, src/compositions, src/
 reference-library/       catalog.json (142) + галерея + движок демо + поиск + лицензии
 config/studio.json       форматы, громкость, голоса, движки, GPU
 config/pronunciation.json словарь ударений для TTS
+requirements-tts.txt     пины venv озвучки (torch+cu128, Silero, Pymorphy) — Python 3.13
+requirements-whisper.txt пины venv ASR (faster-whisper + CUDA-колёса nvidia-*) — Python 3.13
+requirements-manim.txt   пины venv Manim (Cairo, без LaTeX) — Python 3.13
 docs/                    AGENT-SETUP.md (runbook) · LOCAL-SETUP.md (состояние машины) ·
                          benchmarks.md · ffmpeg9-pitfalls.md · mcp-template.json
 examples/                спеки и кадры-превью

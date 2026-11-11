@@ -1,0 +1,34 @@
+# ASR-проверка субтитров (tools/transcribe.py): faster-whisper на CUDA + CPU-фоллбэк.
+# Python 3.13. Создание окружения:
+#   uv venv .venvs/whisper --python 3.13
+#   uv pip install --python .venvs/whisper/Scripts/python.exe -r requirements-whisper.txt
+# nvidia-cublas-cu12 и nvidia-cudnn-cu12 обязательны для device=cuda:
+# без них ctranslate2 падает с "Library cublas64_12.dll is not found".
+# av<15 — совместимость faster-whisper 1.2.1 с ffmpeg 9.
+av==14.2.0
+faster-whisper==1.2.1
+ctranslate2==4.9.0
+nvidia-cublas-cu12==12.9.2.10
+nvidia-cudnn-cu12==9.28.1.4
+nvidia-cuda-nvrtc-cu12==12.9.86
+onnxruntime==1.31.1
+numpy==2.5.4
+tokenizers==0.23.3
+huggingface-hub==2.4.0
+hf-xet==1.8.0
+anyio==4.16.0
+click==8.5.1
+colorama==0.4.6
+filelock==4.2.10
+flatbuffers==25.12.19
+fsspec==2026.9.0
+h11==0.16.0
+httpcore2==2.16.0
+httpx2==2.16.0
+idna==3.20
+packaging==26.3
+protobuf==7.36.2
+pyyaml==6.0.3
+tqdm==4.70.1
+truststore==0.10.5
+typing-extensions==4.16.0

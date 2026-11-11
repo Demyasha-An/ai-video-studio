@@ -110,22 +110,26 @@ uv python install 3.13
 ```bash
 # Озвучка: Silero v5_ru + silero-stress (+ edge-tts и pymorphy3 как fallback/согласование)
 uv venv .venvs/tts-ru --python 3.13
-uv pip install --python .venvs/tts-ru/Scripts/python.exe torch --index-url https://download.pytorch.org/whl/cu128
-uv pip install --python .venvs/tts-ru/Scripts/python.exe silero-stress omegaconf scipy soundfile numpy pymorphy3 edge-tts
-# torch ставится для конкретной CUDA; CPU-вариант: pip install torch (без --index-url)
-# omegaconf и scipy — необъявленные зависимости silero-модели из torch.hub (без них ImportError)
+uv pip install --python .venvs/tts-ru/Scripts/python.exe -r requirements-tts.txt
+# torch в манифесте запинен как 2.11.0+cu128, --extra-index-url на cu128 уже внутри файла.
+# CPU-вариант: заменить строку torch на "torch==2.11.0" и убрать --extra-index-url.
 
 # ASR-проверка субтитров (faster-whisper)
 uv venv .venvs/whisper --python 3.13
-uv pip install --python .venvs/whisper/Scripts/python.exe faster-whisper "av==14.2.0"
-# ВАЖНО: av<15 — ffmpeg 9-совместимость с faster-whisper 1.2.1
-# CUDA-ASR (иначе "Library cublas64_12.dll is not found" при device=cuda):
-uv pip install --python .venvs/whisper/Scripts/python.exe nvidia-cublas-cu12 nvidia-cudnn-cu12
+uv pip install --python .venvs/whisper/Scripts/python.exe -r requirements-whisper.txt
+# ВАЖНО: av==14.2.0 — совместимость faster-whisper 1.2.1 с ffmpeg 9
+# nvidia-cublas-cu12 / nvidia-cudnn-cu12 в манифесте обязательны для device=cuda
+# (иначе "Library cublas64_12.dll is not found"); transcribe.py сам добавляет их bin/ в PATH
 
 # Manim-ярус (без LaTeX для текстовых сцен)
 uv venv .venvs/manim --python 3.13
-uv pip install --python .venvs/manim/Scripts/python.exe manim
+uv pip install --python .venvs/manim/Scripts/python.exe -r requirements-manim.txt
 ```
+
+Манифесты (`requirements-tts.txt`, `requirements-whisper.txt`, `requirements-manim.txt`) — точные
+пины с этой машины (uv pip freeze). Проверка «манифест сходится с окружением»:
+`uv pip install --dry-run --python .venvs/<venv>/Scripts/python.exe -r requirements-<venv>.txt`
+должен ответить `Would make no changes`.
 
 Проверка GPU-озвучки: `.venvs/tts-ru/Scripts/python.exe -c "import torch; print(torch.cuda.is_available(), torch.cuda.get_device_name(0))"`.
 

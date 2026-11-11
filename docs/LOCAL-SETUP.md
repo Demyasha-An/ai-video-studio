@@ -20,12 +20,20 @@
 
 ## Установленные окружения
 
-| Каталог | Python | Что внутри |
-|---|---|---|
-| `.venvs/tts-ru` | 3.13 | torch 2.11.0+cu128, silero-stress, omegaconf, scipy, soundfile, numpy, pymorphy3, edge-tts |
-| `.venvs/whisper` | 3.13 | faster-whisper 1.2.1, ctranslate2 4.9.0, av 14.2.0, nvidia-cublas-cu12 / nvidia-cudnn-cu12 (для CUDA-ASR) |
-| `.venvs/manim` | 3.13 | manim 0.22.1 (Cairo, без LaTeX) |
-| `compositions/` | Node 26.13 | remotion 4.0.542, react 19.2 |
+| Каталог | Python | Манифест | Что внутри |
+|---|---|---|---|
+| `.venvs/tts-ru` | 3.13 | `requirements-tts.txt` | torch 2.11.0+cu128, silero-stress, omegaconf, scipy, soundfile, numpy, pymorphy3, edge-tts |
+| `.venvs/whisper` | 3.13 | `requirements-whisper.txt` | faster-whisper 1.2.1, ctranslate2 4.9.0, av 14.2.0, nvidia-cublas-cu12 / nvidia-cudnn-cu12 (для CUDA-ASR) |
+| `.venvs/manim` | 3.13 | `requirements-manim.txt` | manim 0.22.1 (Cairo, без LaTeX) |
+| `compositions/` | Node 26.13 | `package.json` | remotion 4.0.542, react 19.2 |
+
+Манифесты — точные пины (`uv pip freeze`). Пересоздать окружения с нуля:
+
+```bash
+uv venv .venvs/tts-ru --python 3.13
+uv pip install --python .venvs/tts-ru/Scripts/python.exe -r requirements-tts.txt
+# то же для whisper и manim
+```
 
 Системный Python 3.15.2 **не используется** — под него нет колёс ctranslate2/manimpango.
 `uv` 0.13.7, Python 3.13.18 — в `%USERPROFILE%\AppData\Roaming\uv`.

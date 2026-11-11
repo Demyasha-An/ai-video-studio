@@ -1,0 +1,41 @@
+# Озвучка (tools/voice-ru.py): Silero v5_ru на CUDA + расстановка ударений.
+# Python 3.13. Создание окружения:
+#   uv venv .venvs/tts-ru --python 3.13
+#   uv pip install --python .venvs/tts-ru/Scripts/python.exe -r requirements-tts.txt
+# torch берётся из индекса PyTorch cu128 (сборка под CUDA 12.8, RTX 3050/драйвер 621.14).
+# CPU-вариант: заменить строку torch на "torch==2.11.0" и убрать --extra-index-url.
+--extra-index-url https://download.pytorch.org/whl/cu128
+
+torch==2.11.0+cu128
+omegaconf==2.4.0
+scipy==1.18.1
+soundfile==0.14.0
+numpy==2.5.4
+pymorphy3==2.0.6
+pymorphy3-dicts-ru==2.4.417150.4580142
+silero-stress==1.5
+dawg2-python==0.9.0
+edge-tts==7.3.1
+aiohttp==3.14.5
+aiohappyeyeballs==2.7.1
+aiosignal==1.4.0
+attrs==26.1.0
+certifi==2026.10.23
+cffi==2.1.1
+filelock==4.2.10
+frozenlist==1.8.0
+fsspec==2026.9.0
+idna==3.20
+jinja2==3.1.6
+markupsafe==3.0.4
+mpmath==1.3.0
+multidict==7.2.1
+networkx==3.7
+propcache==0.5.4
+pycparser==3.12
+pyyaml==6.0.3
+setuptools==81.0.0
+sympy==1.14.0
+tabulate==0.10.0
+typing-extensions==4.16.0
+yarl==1.25.1

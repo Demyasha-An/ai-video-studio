@@ -1,0 +1,39 @@
+# Натив-ярус (tools/manim-test.py): Manim 0.22.1, Cairo-рендерер, без LaTeX.
+# Python 3.13. Создание окружения:
+#   uv venv .venvs/manim --python 3.13
+#   uv pip install --python .venvs/manim/Scripts/python.exe -r requirements-manim.txt
+# Кириллица рендерится Pango (manimpango) + локальные шрифты tools/fonts/.
+manim==0.22.1
+manimpango==0.7.1
+pycairo==1.29.2
+moderngl==5.13.0
+moderngl-window==3.1.1
+glcontext==3.1.0
+isosurfaces==0.1.2
+mapbox-earcut==2.1.0
+pyglm==2.8.3
+pyglet==2.1.19
+screeninfo==0.8.1
+skia-pathops==0.9.2
+svgelements==1.9.6
+audioop-lts==0.2.2
+av==19.0.2
+beautifulsoup4==4.15.0
+cloup==4.0.0
+decorator==5.3.1
+markdown-it-py==4.3.0
+mdurl==0.1.2
+pillow==13.0.0
+pydub==0.25.1
+pygments==2.21.0
+rich==15.0.0
+srt==3.5.3
+watchdog==7.1.0
+click==8.5.1
+colorama==0.4.6
+networkx==3.7
+numpy==2.5.4
+scipy==1.18.1
+soupsieve==4.1
+tqdm==4.70.1
+typing-extensions==4.16.0
