@@ -2,3 +2,5 @@
 # Only catalog-referenced files + licenses are force-added to git.
 *
 !.gitignore
+
+# digitalsamba transitions: tracked copies live in templates/digi/

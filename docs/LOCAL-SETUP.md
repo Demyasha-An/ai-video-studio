@@ -105,6 +105,12 @@ Remotion по умолчанию рендерит через GPU: `remotion.conf
   Единственная запись без кода — `MC-PARA-001` (Motion Canvas, `has_code=false`, только ссылка).
   Восстановить исходники с нуля: `git clone --depth 1` четырёх репозиториев из `LICENSES.md`
   в указанные имена каталогов (digitalsamba — 7 файлов через raw.githubusercontent.com).
+- **В git едет только скопированное, не клоны.** У клонов в `sources/` собственный `.git`, поэтому
+  наш репозиторий их не видит; `sources/.gitignore` игнорирует `sources/` целиком (кроме самого
+  `.gitignore` и LICENSE digitalsamba). Все `code_path` каталога указывают на `templates/`:
+  `build-catalog.mjs` копирует туда файлы Opus/Digi так же, как уже копировал RCE/RVE.
+  Лицензии продублированы в `templates/{opus,rendercomp,digi}/LICENSE`. Итог: 113 файлов в
+  `templates/`, 0 битых `code_path` в свежем клоне без `sources/`.
 - **Библиотека: 142 позиции** (в текстах скиллов было 135 — поправлено).
 - **Композиции Remotion** в репозитории отсутствовали — создан минимальный проект с `PriceCompare`
   и переиспользуемым `StatCounter`, чтобы финальный ярус был рабочим.

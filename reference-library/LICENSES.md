@@ -6,10 +6,15 @@
 
 | Источник | Лицензия | Доказательство | Коммерческое |
 |---|---|---|---|
-| Opus Motion Library (GovinduSasanka/opus-motion-library) | MIT | `sources/opus-motion-library/LICENSE` — «MIT License, Copyright (c) 2026 Govindu Sasanka» | ✅ да |
-| RenderComp free-remotion-templates | MIT | `sources/free-remotion-templates/LICENSE` + SPDX-заголовки в файлах | ✅ да |
+| Opus Motion Library (GovinduSasanka/opus-motion-library) | MIT | `sources/opus-motion-library/LICENSE` — «MIT License, Copyright (c) 2026 Govindu Sasanka»; копия рядом с кодом: `templates/opus/LICENSE` | ✅ да |
+| RenderComp free-remotion-templates | MIT | `sources/free-remotion-templates/LICENSE` + SPDX-заголовки в файлах; копия: `templates/rendercomp/LICENSE` | ✅ да |
 | reactvideoeditor/remotion-templates | MIT (грант в README) | README, раздел License: «All templates in this repository are available under the MIT License. You can use them in personal and commercial projects…» (файла LICENSE в репо нет — грант текстом в README) | ✅ да |
+| digitalsamba/claude-code-video-toolkit | MIT | `sources/digitalsamba-video-toolkit/LICENSE`; копия: `templates/digi/LICENSE` | ✅ да |
 | Компоненты video-studio (VSL-*) | MIT | Собственная разработка этой студии | ✅ да |
+
+Почему лицензии продублированы в `templates/`: полные клоны в `sources/` содержат собственный `.git`
+и не попадают в репозиторий студии (см. `sources/.gitignore`), а файлы лицензий обязаны ехать
+вместе с кодом, который мы распространяем.
 
 ## Reference-only — код/ассеты НЕ включать в коммерческие видео
 
@@ -30,7 +35,7 @@
 |---|---|---|
 | iart-ai/*-skills (7 паков: tiktok-video, data-animation, explainer-video, map-animation, kinetic-typography, lower-thirds) | **MIT** | 13 скиллов в `~/.agents/skills/` (short-form-video, chart-animation, diagram-animation, wrapped-video, whiteboard-animation, isometric-animation, animated-infographic, caption-animation, countdown-video, presentation-video, explainer-video, map-animation, kinetic-typography, lower-thirds); рендер Remotion/Manim; «deliver-and-verify loop» |
 | Barty-Bart/motion-graphics | **MIT** + assets OFL (Geist) / ISC (Lucide) / CC0 (SFX) | 6 скиллов: explainer-default, explainer-engaging, explainer-high-energy, motion-broll, object-separation, sound-effects |
-| digitalsamba/claude-code-video-toolkit | **MIT** | клон в `sources/digitalsamba-video-toolkit/`; 7 переходов добавлены в каталог (DGT-TRANS-001..007, код по месту); AI-ген части тулкита (Qwen3-TTS/FLUX/LTX-2 на облачном GPU) НЕ используем |
+| digitalsamba/claude-code-video-toolkit | **MIT** | 7 переходов в `templates/digi/` (копии из локального клона `sources/digitalsamba-video-toolkit/`, код: DGT-TRANS-001..007); AI-ген части тулкита (Qwen3-TTS/FLUX/LTX-2 на облачном GPU) НЕ используем |
 
 Пропущены по лицензиям/зависимостям: onetake (PolyForm Noncommercial — коммерция только через $79 Pro), vibe-motion/skills (заброшен, CC BY-NC ассеты), vox-director (MIT, но требует платный Atlas Cloud API), explainroo (MIT, но без русской TTS — используем как reference для стилей), manim_skill (тяжёлый LaTeX-стек), hyperframes (медленный в бенчмарке).
 

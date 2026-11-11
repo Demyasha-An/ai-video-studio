@@ -41,7 +41,7 @@ node tools/draft-render.mjs tools/draft-refcompare.spec.json renders/draft.mp4 [
 ## Источники
 
 **Базовые (v1):**
-1. **Opus Motion Library** — MIT, 616 motion (Remotion+React). Код по месту в `sources/opus-motion-library/`.
+1. **Opus Motion Library** — MIT, 616 motion (Remotion+React). Клон в `sources/opus-motion-library/` (локально, вне git); используемые в каталоге файлы скопированы в `templates/opus/<категория>/`.
 2. **RenderComp/free-remotion-templates** — MIT, 50 шаблонов; 24 в `templates/rendercomp/`.
 3. **reactvideoeditor/remotion-templates** — MIT (грант в README), 81 шаблон; ~34 в `templates/rve/`.
 4. **ali-abassi/remotion-templates** — ⚠️ лицензия не указана: только ссылка (ALI-REF-001).

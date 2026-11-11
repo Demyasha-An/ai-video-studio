@@ -164,6 +164,7 @@ function findOpus(id) {
   if (!opusFiles) {
     const base = path.join(SRC, "opus-motion-library", "src", "motions");
     const out = [];
+    if (!fs.existsSync(base)) return []; // клон не выкачан — источник только в git-истории
     const walk = (d) => {
       for (const e of fs.readdirSync(d, { withFileTypes: true })) {
         const p = path.join(d, e.name);
@@ -180,8 +181,18 @@ function findOpus(id) {
   return opusFiles.filter((p) => p.toLowerCase().includes(id.toLowerCase()));
 }
 
-const PREF = { opus: "OML", rendercomp: "RCE", rve: "RVE", studio: "VSL", mcanvas: "MC" };
-const counters = {};
+/** Копирует исходник Opus в templates/opus/<cat>/<file> и возвращает путь для catalog.json.
+ * Зачем копия: клон в sources/ содержит собственный .git и не попадает в наш репозиторий. */
+function copyOpus(hit) {
+  if (!hit) return null;
+  const rel = path.relative(path.join(SRC, "opus-motion-library", "src", "motions"), hit);
+  const dest = path.join(TPL, "opus", rel);
+  fs.mkdirSync(path.dirname(dest), { recursive: true });
+  fs.copyFileSync(hit, dest);
+  return path.relative(ROOT, dest).replaceAll("\\", "/");
+}
+
+const PREF = { opus: "OML", rendercomp: "RCE", rve: "RVE", studio: "VSL", mcanvas: "MC" };const counters = {};
 const entries = [];
 const missing = [];
 
@@ -204,9 +215,8 @@ for (const [src, ref, cat, tags, title, titleRu, desc] of CURATED) {
     fs.mkdirSync(path.dirname(dest), { recursive: true });
     fs.copyFileSync(SRC_PATHS.rve(ref), dest);
   } else if (src === "opus") {
-    const hit = findOpus(ref)[0];
-    if (hit) codePath = path.relative(ROOT, hit).replaceAll("\\", "/");
-    else missing.push([id, ref]);
+    codePath = copyOpus(findOpus(ref)[0]); // копия в templates/opus — клон в sources/ вне git
+    if (!codePath) missing.push([id, ref]);
   } else if (src === "studio") {
     codePath = `../compositions/src/lib/library/${ref}`;
   } else if (src === "mcanvas") {
@@ -333,16 +343,21 @@ for (const [src, ref, cat, tags, title, titleRu, desc, style, timing] of MODERN)
   let codePath = null;
   let hasCode = false;
   if (src === "opus") {
-    const hit = findOpus(ref)[0];
-    if (hit) { codePath = path.relative(ROOT, hit).replaceAll("\\", "/"); hasCode = true; }
+    codePath = copyOpus(findOpus(ref)[0]);
+    if (codePath) hasCode = true;
     else missing.push([id, ref]);
   } else if (src === "studio") {
     codePath = `../compositions/src/lib/library/${ref}`;
     hasCode = true;
   } else if (src === "digi") {
     const hit = path.join(SRC, "digitalsamba-video-toolkit", "lib", "transitions", "presentations", ref);
-    if (fs.existsSync(hit)) { codePath = path.relative(ROOT, hit).replaceAll("\\", "/"); hasCode = true; }
-    else missing.push([id, ref]);
+    if (fs.existsSync(hit)) {
+      const dest = path.join(TPL, "digi", ref);
+      fs.mkdirSync(path.dirname(dest), { recursive: true });
+      fs.copyFileSync(hit, dest);
+      codePath = path.relative(ROOT, dest).replaceAll("\\", "/");
+      hasCode = true;
+    } else missing.push([id, ref]);
   }
   // aicss: CC0 видео+промпты, но не код; lottie: JSON у автора (не скачивали); artiphik/animode/kisto — reference-only
 
