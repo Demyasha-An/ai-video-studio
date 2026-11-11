@@ -26,6 +26,16 @@ git --version
 На коротких сценах разница ничтожна и libx264 даёт файл втрое меньше — NVENC для длинных итераций,
 финальный монтаж всегда libx264.
 
+Остальные ярусы и GPU:
+
+| Ярус | GPU? | Как |
+|---|---|---|
+| Озвучка (Silero) | да | torch+cu128, `--device cuda` (по умолчанию `auto`) |
+| ASR (faster-whisper) | да | `WHISPER_DEVICE=auto`: float16 на GPU, если ctranslate2 видит карту. Нужны колёса `nvidia-cublas-cu12` + `nvidia-cudnn-cu12` в том же venv — без них `Library cublas64_12.dll is not found` |
+| Remotion (финал) | да, отрисовка | `setChromiumOpenGlRenderer("angle")` + `setConcurrency(8)` в `compositions/remotion.config.ts` (210 кадров: 13.4 с → 9.6 с). Кодирование — libx264 |
+| Драфт (ffmpeg) | только энкодер | фильтры/композитинг на CPU; NVENC грузит ~50% энкодера и ~15% GPU |
+| Manim | нет | Cairo-рендерер, CPU |
+
 ---
 
 ## Шаг 1. Куда ставить компоненты
@@ -109,6 +119,8 @@ uv pip install --python .venvs/tts-ru/Scripts/python.exe silero-stress omegaconf
 uv venv .venvs/whisper --python 3.13
 uv pip install --python .venvs/whisper/Scripts/python.exe faster-whisper "av==14.2.0"
 # ВАЖНО: av<15 — ffmpeg 9-совместимость с faster-whisper 1.2.1
+# CUDA-ASR (иначе "Library cublas64_12.dll is not found" при device=cuda):
+uv pip install --python .venvs/whisper/Scripts/python.exe nvidia-cublas-cu12 nvidia-cudnn-cu12
 
 # Manim-ярус (без LaTeX для текстовых сцен)
 uv venv .venvs/manim --python 3.13
@@ -144,7 +156,7 @@ Chromium скачивается Remotion'ом при первом рендере
 2. `cd reference-library && node tools/search.mjs "скидка"` → ≥ 1 результат.
 3. `python -m http.server 4173 --bind 127.0.0.1` из `reference-library/` → http://127.0.0.1:4173/gallery/index.html отвечает 200 (после проверки сервер остановить).
 4. Озвучка: `.venvs/tts-ru/Scripts/python.exe tools/voice-ru.py --text "Проверка связи." --out audio/voice/smoke.wav --device cuda` → JSON-отчёт, `smoke-full.wav` 48 kHz stereo, ebur128 ≈ −14 LUFS, `smoke-block01.txt` с расставленными ударениями.
-5. ASR: `.venvs/whisper/Scripts/python.exe tools/transcribe.py audio/voice/smoke-full.wav renders/smoke.srt renders/smoke.json` → SRT с текстом.
+5. ASR: `.venvs/whisper/Scripts/python.exe tools/transcribe.py audio/voice/smoke-full.wav renders/smoke.srt renders/smoke.json` → в stderr строка `whisper small on cuda/float16` (если GPU нет — `cpu/int8`), SRT с текстом.
 6. Manim: `.venvs/manim/Scripts/python.exe -m manim render -ql tools/manim-test.py PriceCompare --media_dir media` → mp4 1080×1920.
 7. Remotion: `cd compositions && npx tsc --noEmit && npx remotion render PriceCompare ../renders/pricecompare.mp4` → mp4 1080×1920@30.
 8. Новый сеанс CLI: команда `/video` видна в меню команд; субагенты `video-scriptwriter`, `motion-designer`, `voice-producer`, `video-editor`, `video-quality-controller` появились в списке агентов.

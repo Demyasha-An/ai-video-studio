@@ -23,7 +23,7 @@
 | Каталог | Python | Что внутри |
 |---|---|---|
 | `.venvs/tts-ru` | 3.13 | torch 2.11.0+cu128, silero-stress, omegaconf, scipy, soundfile, numpy, pymorphy3, edge-tts |
-| `.venvs/whisper` | 3.13 | faster-whisper 1.2.1, ctranslate2 4.9.0, av 14.2.0 |
+| `.venvs/whisper` | 3.13 | faster-whisper 1.2.1, ctranslate2 4.9.0, av 14.2.0, nvidia-cublas-cu12 / nvidia-cudnn-cu12 (для CUDA-ASR) |
 | `.venvs/manim` | 3.13 | manim 0.22.1 (Cairo, без LaTeX) |
 | `compositions/` | Node 26.13 | remotion 4.0.542, react 19.2 |
 
@@ -56,8 +56,13 @@
 **−14.0 LUFS / −1.5 dBTP / 48 kHz stereo**; JSON-отчёт с фактическими длительностями блоков.
 
 Проверка ударений: файл `<slug>-blockNN.txt` рядом с wav. ASR-сверка:
-`.venvs/whisper/Scripts/python.exe tools/transcribe.py <audio> <out.srt> <out.json>` (CPU/int8;
-`WHISPER_DEVICE=cuda` — принудительно GPU, на этой машине инициализация CUDA в ctranslate2 виснет).
+`.venvs/whisper/Scripts/python.exe tools/transcribe.py <audio> <out.srt> <out.json>` —
+по умолчанию `auto`: GPU float16, если ctranslate2 видит карту, иначе CPU int8.
+Принудительно: `WHISPER_DEVICE=cuda|cpu`. Первый в жизни CUDA-прогон компилирует движки cuDNN
+(~40 с, кэш остаётся в `%LOCALAPPDATA%\NVIDIA\ComputeCache`), дальше 24-секундный ролик:
+**4.2 с на GPU против 7.9 с на CPU**. Для этого в venv стоят колёса `nvidia-cublas-cu12` /
+`nvidia-cudnn-cu12`, а `transcribe.py` добавляет их `bin/` в PATH перед импортом faster-whisper
+(иначе `Library cublas64_12.dll is not found`).
 
 ## Рендер
 
@@ -76,6 +81,11 @@ cd compositions && npx remotion render PriceCompare ../renders/pricecompare.mp4
 
 Замеры (1080×1920@30, 30 с): NVENC 5.35 с / 3.8 МБ · libx264 5.67 с / 1.17 МБ.
 На коротких сценах libx264 не хуже и даёт файл втрое меньше; NVENC — для длинных итераций.
+
+Remotion по умолчанию рендерит через GPU: `remotion.config.ts` ставит
+`setChromiumOpenGlRenderer("angle")` + `setConcurrency(8)`. Замер (210 кадров):
+13.4 с → 9.6 с. `--gl=swangle` (софтверная эмуляция) в 2–4 раза медленнее — не использовать.
+Кодирует всё равно libx264: у Remotion нет NVENC-выхода.
 
 ## Что осталось от исходного замысла и где расхождения
 
