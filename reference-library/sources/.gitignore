@@ -1,0 +1,4 @@
+# Full upstream clones are local only (see docs/LOCAL-SETUP.md).
+# Only catalog-referenced files + licenses are force-added to git.
+*
+!.gitignore

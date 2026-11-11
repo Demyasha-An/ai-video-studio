@@ -10,7 +10,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url))); // video-reference-library
+const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url))); // reference-library
 const SRC = path.join(ROOT, "sources");
 const TPL = path.join(ROOT, "templates");
 

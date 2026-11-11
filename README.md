@@ -30,7 +30,7 @@
   ┌──────────┐ ┌─────────┐  ┌──────────┐ ┌─────────┐ ┌──────────────┐
   │SCRIPT-   │ │VOICE-   │  │MOTION-   │ │VIDEO-   │ │QUALITY CTRL  │
   │WRITER    │ │PRODUCER │  │DESIGNER  │ │EDITOR   │ │(ffprobe/AV1  │
-  │сценарий  │ │edge-tts │  │драфт+маним│ │ffmpeg/  │ │whisper/кадры)│
+  │сценарий  │ │silero+  │  │драфт+маним│ │ffmpeg/  │ │whisper/кадры)│
   │+таймкоды │ │−14 LUFS │  │remotion  │ │субтитры │ │→ PASS/FAIL   │
   └──────────┘ └─────────┘  └──────────┘ └─────────┘ └──────┬───────┘
                                                             │ FAIL → возврат роли
@@ -41,7 +41,7 @@
 **Ключевые решения, ради которых проект существует:**
 - 🚫 **Никакого Chrome на этапе итераций** — собственный компилятор «спецификация → ffmpeg filtergraph» рендерит драфты в **7–11 раз быстрее Remotion** (замеры: 4.1 с против 27.9 с на сцене 120 кадров).
 - 🎨 **142 референса с живыми демо** — каталог анимаций (MIT/CC0-источники: Opus Motion Library, RenderComp, reactvideoeditor, Digital Samba) + HTML-галерея с поиском, фильтрами и мультивыбором по ID.
-- 🔊 **Русская озвучка без API-ключей** — edge-tts с автобилками (сервис нестабилен) + локальная нормализация −14 LUFS.
+- 🔊 **Русская озвучка без API-ключей** — Silero v5_ru локально на GPU (CUDA) с ударениями через silero-stress + словарь исключений; fallback — Azure F0 / edge-tts / Piper. Нормализация −14 LUFS локально.
 - ✅ **QC как роль, а не надежда** — отдельный агент прогоняет ffprobe/blackdetect/silencedetect/ebur128/whisper-сверку/визуальный осмотр кадров и возвращает FAIL-пункты авторам ролей.
 - 🤖 **Формат для агентов** — агенты, команда и скиллы это Markdown-файлы с frontmatter; установка — исполняемый runbook `docs/AGENT-SETUP.md`.
 
@@ -73,9 +73,13 @@
 
 | Ярус | Движок | Время (сцена 120 кадров) | Когда |
 |---|---|---|---|
-| 🥇 **Драфт** | `tools/draft-render.mjs` → **ffmpeg filtergraph** | **4.1 с** (x264) / **2.7 с** (AMF GPU) | итерации контента/тайминга, QC-циклы |
+| 🥇 **Драфт** | `tools/draft-render.mjs` → **ffmpeg filtergraph** | **4.1 с** (x264) / **2.7 с** (AMF) / 1.2 с (NVENC) | итерации контента/тайминга, QC-циклы |
 | 🥈 **Натив** | **Manim CE** (Cairo, без браузера) | ~55 с @30fps | графики, формулы, плавная математика |
 | 🥉 **Финал** | **Remotion** (React, headless Chrome) | 27.9 с+ | публикационный ролик |
+
+Драфт-рендер выбирает энкодер флагом: `--nvenc` (NVIDIA) · `--amf` (AMD) · `--qsv` (Intel) · без флага — libx264.
+Замер на RTX 3050 (сцена 30 с, 1080×1920): NVENC 5.35 с / 3.8 МБ против libx264 5.67 с / 1.17 МБ —
+на коротких сценах выигрыша нет, NVENC нужен для длинных итераций; финал всегда libx264.
 
 <p align="center">
   <img src="examples/frames/draft-render.jpg" width="24%" alt="ffmpeg draft">
@@ -101,12 +105,14 @@ agents/                  6 субагентов: director, scriptwriter, voice-p
                          motion-designer, video-editor, quality-controller
 commands/video.md        slash-команда запуска конвейера
 skills/                  video-style-reference · modern-motion-reference
-tools/                   draft-render.mjs (ffmpeg-компилятор), transcribe.py,
-                         manim-пример, шрифтовые заглушки (fonts/ ставится локально)
+tools/                   draft-render.mjs (ffmpeg-компилятор), voice-ru.py (Silero/Azure/
+                         edge/Piper), transcribe.py, manim-пример, шрифты (fonts/ локально)
+compositions/            Remotion-проект: Root.tsx, src/compositions, src/lib/library
 reference-library/       catalog.json (142) + галерея + движок демо + поиск + лицензии
-config/studio.json       форматы, громкость, голоса, движки
-docs/                    AGENT-SETUP.md (runbook) · benchmarks.md · ffmpeg9-pitfalls.md ·
-                         mcp-template.json
+config/studio.json       форматы, громкость, голоса, движки, GPU
+config/pronunciation.json словарь ударений для TTS
+docs/                    AGENT-SETUP.md (runbook) · LOCAL-SETUP.md (состояние машины) ·
+                         benchmarks.md · ffmpeg9-pitfalls.md · mcp-template.json
 examples/                спеки и кадры-превью
 ```
 
@@ -129,7 +135,7 @@ examples/                спеки и кадры-превью
 
 ## Известные ограничения
 
-- edge-tts (Microsoft) нестабилен → ретраи зашиты в voice-producer; для полного оффлайна планируем локальный TTS.
+- edge-tts (Microsoft) нестабилен → 10 ретраев с ротацией голосов в `tools/voice-ru.py`; основной движок — локальный Silero на GPU, edge-tts только fallback.
 - Субагенты не порождают субагентов — конвейер оркестрирует главная сессия (правило вписано во все тексты).
 - Chatterbox/локальный GPU-TTS — осознанно не включены (CPU-инференс непрактичен без CUDA).
 

@@ -1,11 +1,24 @@
 """Transcribe audio with faster-whisper: SRT + JSON segments + text verification.
 
 Usage: python transcribe.py <audio> <srt_out> <json_out> [initial_prompt]
+
+Устройство выбирается автоматически: CUDA (float16), если torch/CT2 видит GPU,
+иначе CPU int8. Принудительно: WHISPER_DEVICE=cuda|cpu, WHISPER_MODEL=small|medium|large-v3.
 """
+import os
 import sys
 import json
 
 from faster_whisper import WhisperModel
+
+
+def pick_device() -> tuple[str, str]:
+    """По умолчанию CPU/int8: ctranslate2.get_cuda_device_count() на этой машине
+    зависает при инициализации CUDA, поэтому GPU включается только явно."""
+    forced = os.environ.get("WHISPER_DEVICE", "cpu").lower()
+    if forced == "cuda":
+        return "cuda", "float16"
+    return "cpu", "int8"
 
 
 def ts(seconds: float) -> str:
@@ -20,7 +33,9 @@ def main() -> None:
     audio, srt_out, json_out = sys.argv[1], sys.argv[2], sys.argv[3]
     prompt = sys.argv[4] if len(sys.argv) > 4 else ""
 
-    model = WhisperModel("small", device="cpu", compute_type="int8")
+    device, compute_type = pick_device()
+    model = WhisperModel(os.environ.get("WHISPER_MODEL", "small"), device=device, compute_type=compute_type)
+    print(f"[i] whisper {os.environ.get('WHISPER_MODEL', 'small')} on {device}/{compute_type}", file=sys.stderr)
     # vad_filter=False: на чистой TTS-озвучке VAD съедает начало дорожки
     segments, info = model.transcribe(
         audio, language="ru", initial_prompt=prompt or None,

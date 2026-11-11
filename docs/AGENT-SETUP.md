@@ -20,7 +20,11 @@ git --version
 - **FFmpeg** — `winget install Gyan.FFmpeg` (Windows) / `apt install ffmpeg` (Debian) / `brew install ffmpeg` (macOS). Нужен в PATH.
 - **Python 3.12+** — опционален (ASR-проверка субтитров и Manim-ярус).
 
-**GPU**: если `ffmpeg -hide_banner -encoders | grep amf` показывает `h264_amf` (AMD) — драфт-рендер умеет ускоряться флагом `--amf`. NVENC/QSV также поддержаны через ffmpeg.
+**GPU**: драфт-рендер ускоряется аппаратным энкодером — `--nvenc` (NVIDIA), `--amf` (AMD), `--qsv` (Intel).
+Проверка: `ffmpeg -hide_banner -encoders | grep -E "h264_(nvenc|amf|qsv)"`.
+Замеры на RTX 3050 (сцена 30 с, 1080×1920): NVENC 5.35 с / 3.8 МБ, libx264 5.67 с / 1.17 МБ.
+На коротких сценах разница ничтожна и libx264 даёт файл втрое меньше — NVENC для длинных итераций,
+финальный монтаж всегда libx264.
 
 ---
 
@@ -80,31 +84,71 @@ cp /c/Windows/Fonts/arial.ttf tools/fonts/
 ```
 Linux/macOS: ничего не нужно — draft-render сам найдёт DejaVu (`/usr/share/fonts/...`). Шрифты Arial — собственность Microsoft, в репозиторий не входят.
 
-### 2.6 Python-окружения (опционально)
+### 2.6 Python-окружения (нужны для озвучки и ASR)
+
+**ВАЖНО: системный Python 3.15 не подходит.** Для `ctranslate2` (ядро faster-whisper) и
+`manimpango`/`pycairo` (Manim) колёс под cp315 нет — максимум cp313. Ставим Python 3.13 рядом:
+
 ```bash
-# ASR-проверка субтитров (faster-whisper):
-uv venv .venvs/whisper && uv pip install --python .venvs/whisper/Scripts/python.exe faster-whisper "av==14.2.0"
+# uv (устанавливает и Python 3.13)
+winget install --id astral-sh.uv -e
+# winget не обновляет PATH текущей сессии: до перезапуска терминала звать полным путём
+#   ~/AppData/Local/Microsoft/WinGet/Packages/astral-sh.uv_*/uv.exe
+uv python install 3.13
+```
+
+```bash
+# Озвучка: Silero v5_ru + silero-stress (+ edge-tts и pymorphy3 как fallback/согласование)
+uv venv .venvs/tts-ru --python 3.13
+uv pip install --python .venvs/tts-ru/Scripts/python.exe torch --index-url https://download.pytorch.org/whl/cu128
+uv pip install --python .venvs/tts-ru/Scripts/python.exe silero-stress omegaconf scipy soundfile numpy pymorphy3 edge-tts
+# torch ставится для конкретной CUDA; CPU-вариант: pip install torch (без --index-url)
+# omegaconf и scipy — необъявленные зависимости silero-модели из torch.hub (без них ImportError)
+
+# ASR-проверка субтитров (faster-whisper)
+uv venv .venvs/whisper --python 3.13
+uv pip install --python .venvs/whisper/Scripts/python.exe faster-whisper "av==14.2.0"
 # ВАЖНО: av<15 — ffmpeg 9-совместимость с faster-whisper 1.2.1
 
-# Manim-ярус (без LaTeX для текстовых сцен):
-uv venv .venvs/manim && uv pip install --python .venvs/manim/Scripts/python.exe manim
+# Manim-ярус (без LaTeX для текстовых сцен)
+uv venv .venvs/manim --python 3.13
+uv pip install --python .venvs/manim/Scripts/python.exe manim
+```
+
+Проверка GPU-озвучки: `.venvs/tts-ru/Scripts/python.exe -c "import torch; print(torch.cuda.is_available(), torch.cuda.get_device_name(0))"`.
+
+**torch cu128 весит 2.6 ГБ на диске.** Если `uv pip install` рвётся на `download-r2.pytorch.org`
+(TLS handshake / timeout — бывает на нестабильном канале), скачайте колесо отдельно и поставьте локально:
+
+```bash
+curl.exe -L --retry 8 --retry-all-errors -C - -o torch.whl \
+  "https://download.pytorch.org/whl/cu128/torch-2.11.0%2Bcu128-cp313-cp313-win_amd64.whl"
+uv pip install --python .venvs/tts-ru/Scripts/python.exe ./torch.whl
 ```
 
 ### 2.7 Remotion-финальный ярус
+Проект лежит в `{{STUDIO_DIR}}/compositions/` (package.json, tsconfig, remotion.config.ts, `src/Root.tsx`):
 ```bash
-cd compositions 2>/dev/null || true   # если compositions перенесены; иначе пропустить
+cd compositions
+npm install                      # ~245 пакетов, 45 с
+npx tsc --noEmit                 # typecheck
+npx remotion render PriceCompare ../renders/pricecompare.mp4
 ```
-Remotion-проект (React/TS) устанавливается отдельно: `npm install remotion @remotion/cli react react-dom` в каталоге `compositions/` (см. docs/setup.md §Remotion). Драфт-ярус работает и без него.
+Chromium скачивается Remotion'ом при первом рендере. Драфт-ярус работает и без него.
 
 ---
 
 ## Шаг 3. Верификация (обязательная, по пунктам)
 
-1. `node tools/draft-render.mjs tools/draft-refcompare.spec.json /tmp/verify.mp4 --amf` → exit 0, длительность 4.0 с.
-2. `node tools/search.mjs "скидка"` (из `reference-library/`) → ≥ 1 результат.
+1. `node tools/draft-render.mjs tools/draft-refcompare.spec.json renders/verify.mp4 --nvenc` → exit 0, длительность 4.0 с, 1080×1920.
+2. `cd reference-library && node tools/search.mjs "скидка"` → ≥ 1 результат.
 3. `python -m http.server 4173 --bind 127.0.0.1` из `reference-library/` → http://127.0.0.1:4173/gallery/index.html отвечает 200 (после проверки сервер остановить).
-4. Новый сеанс CLI: команда `/video` видна в меню команд; субагенты `video-scriptwriter`, `motion-designer`, `voice-producer`, `video-editor`, `video-quality-controller` появились в списке агентов.
-5. Smoke-тест оркестрации: попросить агента-сценариста создать мини-сценарий; убедиться, что субагент получил роль и вернул артефакт.
+4. Озвучка: `.venvs/tts-ru/Scripts/python.exe tools/voice-ru.py --text "Проверка связи." --out audio/voice/smoke.wav --device cuda` → JSON-отчёт, `smoke-full.wav` 48 kHz stereo, ebur128 ≈ −14 LUFS, `smoke-block01.txt` с расставленными ударениями.
+5. ASR: `.venvs/whisper/Scripts/python.exe tools/transcribe.py audio/voice/smoke-full.wav renders/smoke.srt renders/smoke.json` → SRT с текстом.
+6. Manim: `.venvs/manim/Scripts/python.exe -m manim render -ql tools/manim-test.py PriceCompare --media_dir media` → mp4 1080×1920.
+7. Remotion: `cd compositions && npx tsc --noEmit && npx remotion render PriceCompare ../renders/pricecompare.mp4` → mp4 1080×1920@30.
+8. Новый сеанс CLI: команда `/video` видна в меню команд; субагенты `video-scriptwriter`, `motion-designer`, `voice-producer`, `video-editor`, `video-quality-controller` появились в списке агентов.
+9. Smoke-тест оркестрации: попросить агента-сценариста создать мини-сценарий; убедиться, что субагент получил роль и вернул артефакт.
 
 ## Отчёт агенту-установщику
 В конце вернуть: таблицу проверок (шаг 0 и шаг 3), установленные пути компонентов, список пропущенных опций (MCP/Python/Remotion) и причину, следующее действие пользователя (перезапустить сессию CLI).

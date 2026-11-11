@@ -3,7 +3,7 @@
  * Спецификация сцены (JSON) → ffmpeg filtergraph → MP4 за секунды.
  *
  * Использование:
- *   node tools/draft-render.mjs <spec.json> <out.mp4> [--amf] [--crf 20]
+ *   node tools/draft-render.mjs <spec.json> <out.mp4> [--nvenc|--amf|--qsv] [--crf 20]
  *
  * Спецификация (см. tools/draft-refcompare.spec.json):
  * {
@@ -30,15 +30,17 @@ import { execFileSync } from "node:child_process";
 const args = process.argv.slice(2);
 const specPath = args[0];
 const outPath = args[1];
+const useNvenc = args.includes("--nvenc");
 const useAmf = args.includes("--amf");
+const useQsv = args.includes("--qsv");
 const crfIdx = args.indexOf("--crf");
 const crf = crfIdx >= 0 ? args[crfIdx + 1] : "20";
 if (!specPath || !outPath) {
-  console.error("usage: node tools/draft-render.mjs <spec.json> <out.mp4> [--amf] [--crf N]");
+  console.error("usage: node tools/draft-render.mjs <spec.json> <out.mp4> [--nvenc|--amf|--qsv] [--crf N]");
   process.exit(1);
 }
 
-const spec = JSON.parse(fs.readFileSync(specPath, "utf-8"));
+const spec = JSON.parse(fs.readFileSync(specPath, "utf-8").replace(/^\uFEFF/, ""));
 const W = spec.width, H = spec.height, FPS = spec.fps ?? 30, D = spec.duration;
 const ROOT = process.cwd();
 
@@ -135,9 +137,14 @@ const graph = chains.join(";\n");
 
 // график + параметры
 const filterArg = graph;
-const encArgs = useAmf
+const encArgs = useNvenc
+  ? ["-c:v", "h264_nvenc", "-preset", "p4", "-rc", "vbr", "-cq", crf, "-b:v", "0", "-spatial-aq", "1"]
+  : useAmf
   ? ["-c:v", "h264_amf", "-quality", "speed", "-b:v", "10M"]
+  : useQsv
+  ? ["-c:v", "h264_qsv", "-preset", "veryfast", "-global_quality", crf]
   : ["-c:v", "libx264", "-preset", "veryfast", "-crf", crf];
+const encName = useNvenc ? "h264_nvenc" : useAmf ? "h264_amf" : useQsv ? "h264_qsv" : "libx264";
 
 const inputArgs = ["-f", "lavfi", "-i", `gradients=duration=${D}`];
 if (spec.audio) inputArgs.push("-i", spec.audio);
@@ -158,4 +165,4 @@ const out = execFileSync("ffmpeg", [
 ], { stdio: ["ignore", "ignore", "pipe"], cwd: ROOT, shell: false });
 
 fs.rmSync(tmpDir, { recursive: true, force: true });
-console.log(`[draft] ${outPath} — OK (${spec.elements?.length ?? 0} элементов, ${D}s, ${useAmf ? "h264_amf" : "libx264"})`);
+console.log(`[draft] ${outPath} — OK (${spec.elements?.length ?? 0} элементов, ${D}s, ${encName})`);

@@ -22,11 +22,29 @@
   "loudness_target_lufs": -14,
   "true_peak_dbtp": -1.5,
   "default_duration_sec": { "min": 30, "max": 60 },
+  "hardware": {
+    "gpu": "NVIDIA GeForce RTX 3050 8GB (CUDA 12.x, драйвер 621.14)",
+    "cpu": "Intel i3-12100F",
+    "ram_gb": 16,
+    "encoders": {
+      "nvenc": "h264_nvenc — основной для драфта (--nvenc), замер 1.24 с на сцене 120 кадров",
+      "libx264": "fallback (--crf N), замер 0.87 с на той же сцене (маленькая сцена — CPU быстрее)",
+      "amf": "недоступен (нет AMD GPU)",
+      "qsv": "недоступен (F-серия CPU без iGPU)"
+    }
+  },
   "tts": {
-    "default_engine": "edge-tts",
-    "command": "uvx edge-tts",
-    "voice": "ru-RU-DmitryNeural",
-    "alt_voices": ["ru-RU-SvetlanaNeural", "ru-RU-DariyaNeural", "ru-RU-PavelNeural"],
+    "default_engine": "silero",
+    "command": "python tools/voice-ru.py",
+    "voice": "xenia",
+    "device": "auto",
+    "silero_voices": ["xenia", "baya", "kseniya", "aidar", "eugene"],
+    "pronunciation": "config/pronunciation.json",
+    "alternatives": {
+      "azure": "F0 500 тыс. символов/мес бесплатно, коммерчески чисто — нужны AZURE_SPEECH_KEY/REGION",
+      "edge": "edge-tts, быстро, ударения не контролируются",
+      "piper": "локальный MIT, нужен ru_RU-*.onnx + бинарь piper"
+    },
     "paid_engine": "elevenlabs-mcp (требует API-ключ и разрешения пользователя)"
   },
   "asr": {
@@ -35,10 +53,10 @@
     "venv_python": "{{STUDIO_DIR}}/.venvs/whisper/Scripts/python.exe"
   },
   "engines": {
-    "ffmpeg": "winget links (PATH)",
+    "ffmpeg": "9.0.2 full (libass, freetype, fontconfig, x264, nvenc)",
     "remotion_project": "{{STUDIO_DIR}}/compositions",
     "kinocut": "uvx --from kinocut kino",
-    "chatterbox": "НЕ установлен: нет NVIDIA GPU (AMD Vega 8 iGPU), CPU-инференс непрактичен"
+    "chatterbox": "НЕ установлен: осознанно исключён (500M-модель, CPU-инференс непрактичен)"
   },
   "agents": [
     "video-scriptwriter",
