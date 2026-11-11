@@ -14,6 +14,24 @@ const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url))); // refe
 const SRC = path.join(ROOT, "sources");
 const TPL = path.join(ROOT, "templates");
 
+// Пересборка каталога требует клонов в sources/ (они вне git — см. sources/.gitignore).
+// В свежем клоне их нет: печатаем подсказку и выходим, не затирая закоммиченный catalog.json.
+const REQUIRED_SOURCES = [
+  ["opus-motion-library", "src/motions"],
+  ["free-remotion-templates", "src/components"],
+  ["remotion-templates", "templates"],
+  ["digitalsamba-video-toolkit", "lib/transitions/presentations"],
+];
+const absent = REQUIRED_SOURCES.filter(([d, sub]) => !fs.existsSync(path.join(SRC, d, sub)));
+if (absent.length) {
+  console.error(
+    `[skip] нет исходников: ${absent.map(([d]) => `sources/${d}`).join(", ")}.\n` +
+      "Каталог не пересобран, используется закоммиченный catalog.json (code_path → templates/).\n" +
+      "Нужна пересборка — выкачайте репозитории из LICENSES.md в sources/ (docs/LOCAL-SETUP.md).",
+  );
+  process.exit(0);
+}
+
 const LICENSES = {
   opus: { license: "MIT", commercial: true, source_url: "https://github.com/GovinduSasanka/opus-motion-library", note: "LICENSE в корне репозитория (c) 2026 Govindu Sasanka" },
   rendercomp: { license: "MIT", commercial: true, source_url: "https://github.com/RenderComp/free-remotion-templates", note: "LICENSE в корне репозитория + SPDX-заголовки в файлах" },
